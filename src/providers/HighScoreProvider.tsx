@@ -25,6 +25,7 @@ const HighScoreProvider = ({ children }: { children: ReactNode }) => {
 }
 
 // create a custom hook to use the context and simplify the access to the context
+// eslint-disable-next-line react-refresh/only-export-components
 export const useHighScore = () => {
    const context = useContext(HighScoreContext);
     if (context === undefined) {
