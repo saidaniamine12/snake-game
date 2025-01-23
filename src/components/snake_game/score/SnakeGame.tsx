@@ -1,8 +1,9 @@
-import { Box, Button, Stack, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import { useScore } from "../../../providers/ScoreProvier";
 import { GameData, useHighScore } from "../../../providers/HighScoreProvider";
 import { useEffect, useState } from "react";
 import GameOverModal from "../../GameOverModal";
+import SnakeGameLogic from "./SnakeGameLogic";
 
 const SnakeGame = () => {
   const { score } = useScore();
@@ -10,16 +11,12 @@ const SnakeGame = () => {
   const [gameOver, setGameOver] = useState(false);
 
   // handling game over
-  const handleGameOver = () => {
-    setGameOver(true);
-  };
-  // handling restart
-  const handleRestartGame = () => {
-    if (score > highScore) {
-      setHighScore(score);
-    }
-    setGameOver(false);
-  };
+  // const handleGameOver = () => {
+  //   setGameOver(true);
+  //   if (score > highScore) {
+  //     setHighScore(score);
+  //   }
+  // };
 
   useEffect(() => {
     const gameData: GameData = {
@@ -76,18 +73,15 @@ const SnakeGame = () => {
             borderRadius: "1%",
             marginTop: "-8px",
             justifyContent: "center",
-            backgroundColor: "#EDDB78",
+            backgroundColor: "white",
             display: "flex",
             alignItems: "center",
           }}
         >
-          <Button variant="outlined" onClick={handleGameOver}>
-            Game Over
-          </Button>
-
+          <SnakeGameLogic setGameOver={() => setGameOver} />
           <GameOverModal
             score={score}
-            onRestart={handleRestartGame}
+            onRestart={() => setGameOver(false)}
             gameOver={gameOver}
           />
         </Box>

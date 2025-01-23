@@ -15,6 +15,7 @@ function App() {
           alignItems="center"
           sx={{
             border: "3px solid #f8a24d",
+            borderRadius: "1%",
             height: "90%",
             minHeight: "565px",
             width: "100%",
