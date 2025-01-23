@@ -27,7 +27,7 @@ const SnakeGame = () => {
       score: 0,
     };
     localStorage.setItem("gameData", JSON.stringify(gameData));
-  }, [setHighScore]);
+  }, [highScore, setHighScore]);
 
   return (
     // In SnakeGame component
