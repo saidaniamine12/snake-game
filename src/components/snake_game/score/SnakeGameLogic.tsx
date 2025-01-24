@@ -20,8 +20,10 @@ const SnakeGameLogic: React.FC<SnakeGameLogicProps> = () => {
   ratImage.src = ratImagePath;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [snake, setSnake] = useState([{ x: 10, y: 10 }]);
-  const {setScore } = useScore();
+  const { setScore } = useScore();
   const [direction, setDirection] = useState({ dx: 0, dy: 0 });
+  const currentDirection = useRef(direction);
+  const queuedDirection = useRef(direction);
 
   const newRat = (): Segment => {
     let rat: Segment;
@@ -54,35 +56,38 @@ const SnakeGameLogic: React.FC<SnakeGameLogicProps> = () => {
     setRat(newRat);
   };
 
+  useEffect(() => {
+    setScore(snake.length -1);
+  },[snake]);
 
 
-    // Update game logic
+  // Update game logic
   // using callback to avoid infinite loop
   // and update the game state without causing re-render
   // based on the old state 
   const updateGame = useCallback(() => {
-    // moving the snake
+    setDirection(queuedDirection.current);
+    currentDirection.current = queuedDirection.current;
     setSnake((prevSnake) => {
+     
+
       const newSnake: Segment[] = [...prevSnake];
-      const newHead : Segment= {
-        x : newSnake[0].x + direction.dx,
-        y : newSnake[0].y + direction.dy
+      const newHead = {
+        x: prevSnake[0].x + currentDirection.current.dx,
+        y: prevSnake[0].y + currentDirection.current.dy
       };
-          // Check if the snake eats the rat
+      
+    // Check if the snake eats the rat
     if (newHead.x === rat.x && newHead.y === rat.y) {
       newRandomRatPosition();
-      setScore(snake.length)
     } else {
-      
         newSnake.pop();
       };
     
       return [newHead, ...newSnake];
-    })
+    });
 
-   
-
-  }, [direction, snake]);
+  }, [snake]);
 
     // Game loop
   // used to update the game state every 100ms
@@ -164,36 +169,34 @@ const SnakeGameLogic: React.FC<SnakeGameLogicProps> = () => {
     };
 
     draw();
-  }, [direction, snake, rat]);
+  }, [direction, snake]);
 
 
 
 
 
+  // Input handling
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      const { key } = e;
-      const { dx, dy } = direction;
+      const newDir = (() => {
+        const { dx, dy } = currentDirection.current;
+        switch (e.key) {
+          case 'ArrowLeft': return dx !== 1 ? { dx: -1, dy: 0 } : null;
+          case 'ArrowRight': return dx !== -1 ? { dx: 1, dy: 0 } : null;
+          case 'ArrowUp': return dy !== 1 ? { dx: 0, dy: -1 } : null;
+          case 'ArrowDown': return dy !== -1 ? { dx: 0, dy: 1 } : null;
+          default: return null;
+        }
+      })();
 
-      switch (key) {
-        case "ArrowLeft":
-          if (dx !== 1) setDirection({ dx: -1, dy: 0 });
-          break;
-        case "ArrowRight":
-          if (dx !== -1) setDirection({ dx: 1, dy: 0 });
-          break;
-        case "ArrowUp":
-          if (dy !== 1) setDirection({ dx: 0, dy: -1 });
-          break;
-        case "ArrowDown":
-          if (dy !== -1) setDirection({ dx: 0, dy: 1 });
-          break;
+      if (newDir) {
+        queuedDirection.current = newDir;
       }
     };
 
-    window.addEventListener("keydown", handleKeyPress);
-    return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [direction]);
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, []);
 
   return <canvas ref={canvasRef} />;
 };

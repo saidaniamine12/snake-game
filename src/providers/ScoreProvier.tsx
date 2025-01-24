@@ -1,9 +1,9 @@
-import { createContext, ReactNode, useContext, useState } from "react";
+import { createContext, Dispatch, ReactNode, SetStateAction, useContext, useState } from "react";
 
 // define the interface
 interface Score {
   score: number | 0;
-  setScore: (score: number) => void;
+  setScore: Dispatch<SetStateAction<number>>;
 }
 
 // create the context
