@@ -1,14 +1,17 @@
-import { Box, Stack, Typography } from "@mui/material";
+import { Box, Button, Stack, Typography } from "@mui/material";
 import { useScore } from "../../../providers/ScoreProvier";
 import { GameData, useHighScore } from "../../../providers/HighScoreProvider";
 import { useEffect, useState } from "react";
-import GameOverModal from "../../GameOverModal";
+import GameOverModal from "../../modals/GameOverModal";
 import SnakeGameLogic from "./SnakeGameLogic";
+import GamePausedModal from "../../modals/GamePausedModal";
+import { useIsGamePaused } from "../../../providers/IsGamePausedProvider";
 
 const SnakeGame = () => {
   const { score } = useScore();
   const { highScore, setHighScore } = useHighScore();
   const [gameOver, setGameOver] = useState(false);
+  const {setIsGamePaused} = useIsGamePaused();
 
   // handling game over
   // const handleGameOver = () => {
@@ -77,12 +80,12 @@ const SnakeGame = () => {
             alignItems: "center",
           }}
         >
-          <SnakeGameLogic setGameOver={() => setGameOver} />
+          <SnakeGameLogic onGameOver={() => setGameOver(true)} />
           <GameOverModal
-            score={score}
             onRestart={() => setGameOver(false)}
             gameOver={gameOver}
           />
+          <GamePausedModal gameOver={gameOver} />
         </Box>
       </Box>
     </Stack>

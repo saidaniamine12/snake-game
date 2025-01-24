@@ -1,4 +1,11 @@
-import { createContext, Dispatch, ReactNode, SetStateAction, useContext, useState } from "react";
+import {
+  createContext,
+  Dispatch,
+  ReactNode,
+  SetStateAction,
+  useContext,
+  useState,
+} from "react";
 
 // define the interface
 interface Score {

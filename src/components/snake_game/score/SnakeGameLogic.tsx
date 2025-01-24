@@ -1,19 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useScore } from "../../../providers/ScoreProvier";
+import { useIsGamePaused } from "../../../providers/IsGamePausedProvider";
 
 interface Segment {
   x: number;
   y: number;
 }
 interface SnakeGameLogicProps {
-  setGameOver: () => void;
+  // used to notify the parent and the logic will be handled in the parent
+  // better for separation of concerns and reusability, so the child does not need to care how the game over is handled
+  // ---->> flexibilty, encapsulation and separation of concerns
+  // and it uses callbacks so it might be more efficient if it was already memoized
+  // alternativee use setGameOver in the state and handle the game over in the logic Dispatch<SetStateAction<boolean>>
+  onGameOver: () => void;
 }
 
-  // Game constants
-  const GRID_SIZE = 20; // Grid size in pixels meaning the food width and length
-  const UPDATE_INTERVAL  = 100  // Update interval in milliseconds
+// Game constants
+const GRID_SIZE = 20; // Grid size in pixels meaning the food width and length
+const UPDATE_INTERVAL = 100; // Update interval in milliseconds
 
-const SnakeGameLogic: React.FC<SnakeGameLogicProps> = () => {
+const SnakeGameLogic: React.FC<SnakeGameLogicProps> = ({ onGameOver }) => {
   const ratImagePath = "mouse.png";
   // In draw function:
   const ratImage = new Image();
@@ -21,9 +27,14 @@ const SnakeGameLogic: React.FC<SnakeGameLogicProps> = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [snake, setSnake] = useState([{ x: 10, y: 10 }]);
   const { setScore } = useScore();
+  // direction state vars to track the direction and prevent the 180 degree turn
   const [direction, setDirection] = useState({ dx: 0, dy: 0 });
   const currentDirection = useRef(direction);
   const queuedDirection = useRef(direction);
+  // adding the pause fonctionality
+  const {isGamePaused, setIsGamePaused} = useIsGamePaused();
+  const isGamePausedRef = useRef(isGamePaused);
+  const accumulatedPauseTime = useRef(0);
 
   const newRat = (): Segment => {
     let rat: Segment;
@@ -57,50 +68,56 @@ const SnakeGameLogic: React.FC<SnakeGameLogicProps> = () => {
   };
 
   useEffect(() => {
-    setScore(snake.length -1);
-  },[snake]);
-
+    setScore(snake.length - 1);
+  }, [snake]);
 
   // Update game logic
   // using callback to avoid infinite loop
   // and update the game state without causing re-render
-  // based on the old state 
+  // based on the old state
   const updateGame = useCallback(() => {
     setDirection(queuedDirection.current);
     currentDirection.current = queuedDirection.current;
     setSnake((prevSnake) => {
-     
-
       const newSnake: Segment[] = [...prevSnake];
       const newHead = {
         x: prevSnake[0].x + currentDirection.current.dx,
-        y: prevSnake[0].y + currentDirection.current.dy
+        y: prevSnake[0].y + currentDirection.current.dy,
       };
-      
-    // Check if the snake eats the rat
-    if (newHead.x === rat.x && newHead.y === rat.y) {
-      newRandomRatPosition();
-    } else {
+
+      // collision case
+      prevSnake.some((segment, index) => {
+        if (segment.x === newHead.x && segment.y === newHead.y && index != 0) {
+          console.log("Game Over");
+          // setGameOver(true);
+          // return prevSnake;
+        }
+      });
+
+      // Check if the snake eats the rat
+      if (newHead.x === rat.x && newHead.y === rat.y) {
+        newRandomRatPosition();
+      } else {
         newSnake.pop();
-      };
-    
+      }
+
       return [newHead, ...newSnake];
     });
-
   }, [snake]);
 
-    // Game loop
+  // Game loop
   // used to update the game state every 100ms
   useEffect(() => {
     let lastUpdateTime = 0; // initialize the time stamp
     let animationFrameId: number;
 
-    const gameLoop = (timestamp: number) => { // timestamp from the browser
+    const gameLoop = (timestamp: number) => {
+      // timestamp from the browser
       if (!lastUpdateTime) lastUpdateTime = timestamp; // if it is 0 set it to the current timestamp to be accurate
       const deltaTime = timestamp - lastUpdateTime; // calculate the time difference
       if (deltaTime >= UPDATE_INTERVAL) {
         updateGame();
-        lastUpdateTime = timestamp; //reset the lastUpdateTime 
+        lastUpdateTime = timestamp; //reset the lastUpdateTime
       }
 
       animationFrameId = requestAnimationFrame(gameLoop); // call the game loop recursively on the next frame
@@ -117,9 +134,8 @@ const SnakeGameLogic: React.FC<SnakeGameLogicProps> = () => {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-      // Clear canvas
+    // Clear canvas
     const draw = () => {
-      
       canvas.style.width = "100%";
       canvas.style.height = "100%";
       const computedStyle = getComputedStyle(canvas);
@@ -171,21 +187,40 @@ const SnakeGameLogic: React.FC<SnakeGameLogicProps> = () => {
     draw();
   }, [direction, snake]);
 
-
-
-
-
   // Input handling
   useEffect(() => {
+
+    // space handling
+    // arrow keys handling
     const handleKeyPress = (e: KeyboardEvent) => {
+      if(e.code === "Space") {
+        if (!isGamePausedRef.current) {
+          // set it to true
+            isGamePausedRef.current = true;
+            setIsGamePaused(true); 
+        }
+      } 
+      if (isGamePausedRef.current ) {
+        if ( e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "ArrowUp" || e.key === "ArrowDown"){
+          isGamePausedRef.current = false;
+        setIsGamePaused(false);
+        }
+
+        
+      };
       const newDir = (() => {
         const { dx, dy } = currentDirection.current;
         switch (e.key) {
-          case 'ArrowLeft': return dx !== 1 ? { dx: -1, dy: 0 } : null;
-          case 'ArrowRight': return dx !== -1 ? { dx: 1, dy: 0 } : null;
-          case 'ArrowUp': return dy !== 1 ? { dx: 0, dy: -1 } : null;
-          case 'ArrowDown': return dy !== -1 ? { dx: 0, dy: 1 } : null;
-          default: return null;
+          case "ArrowLeft":
+            return dx !== 1 ? { dx: -1, dy: 0 } : null;
+          case "ArrowRight":
+            return dx !== -1 ? { dx: 1, dy: 0 } : null;
+          case "ArrowUp":
+            return dy !== 1 ? { dx: 0, dy: -1 } : null;
+          case "ArrowDown":
+            return dy !== -1 ? { dx: 0, dy: 1 } : null;
+          default:
+            return null;
         }
       })();
 
@@ -194,9 +229,11 @@ const SnakeGameLogic: React.FC<SnakeGameLogicProps> = () => {
       }
     };
 
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, []);
+    window.addEventListener("keydown", handleKeyPress);
+    return () => {
+      window.removeEventListener("keydown", handleKeyPress);
+    }
+  }, [direction]);
 
   return <canvas ref={canvasRef} />;
 };

@@ -8,9 +8,10 @@ import {
 } from "@mui/material";
 import { TransitionProps } from "@mui/material/transitions";
 import React from "react";
+import { useScore } from "../../providers/ScoreProvier";
+import { useIsGamePaused } from "../../providers/IsGamePausedProvider";
 
 interface GameOverModalProps {
-  score: number;
   onRestart: () => void;
   gameOver: boolean;
 }
@@ -26,14 +27,16 @@ const Transition = React.forwardRef(function Transition(
 });
 
 const GameOverModal: React.FC<GameOverModalProps> = ({
-  score,
   onRestart,
   gameOver,
 }) => {
+  const { score } = useScore();
+  const {isGamePaused} = useIsGamePaused();
+
   return (
     <Dialog
       TransitionComponent={Transition}
-      open={gameOver}
+      open={gameOver && !isGamePaused}
       disableEscapeKeyDown
       sx={{ textAlign: "center" }}
       PaperProps={{

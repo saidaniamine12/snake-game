@@ -5,6 +5,7 @@ import { Stack, Typography, Container } from "@mui/material";
 import SnakeGame from "./components/snake_game/score/SnakeGame";
 import HighScoreProvider from "./providers/HighScoreProvider";
 import ScoreProvider from "./providers/ScoreProvier";
+import IsGamePausedProvider from "./providers/IsGamePausedProvider";
 
 function App() {
   return (
@@ -41,7 +42,10 @@ function App() {
           </Stack>
           <HighScoreProvider>
             <ScoreProvider>
-              <SnakeGame />
+              <IsGamePausedProvider>
+                <SnakeGame />
+              </IsGamePausedProvider>
+              
             </ScoreProvider>
           </HighScoreProvider>
         </Stack>
