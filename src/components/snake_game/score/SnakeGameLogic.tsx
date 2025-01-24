@@ -9,19 +9,19 @@ interface SnakeGameLogicProps {
   setGameOver: () => void;
 }
 
+  // Game constants
+  const GRID_SIZE = 20; // Grid size in pixels meaning the food width and length
+  const UPDATE_INTERVAL  = 100  // Update interval in milliseconds
 
 const SnakeGameLogic: React.FC<SnakeGameLogicProps> = () => {
-      // ensure that they do not overlap
-
-      const ratImagePath = "mouse.png";
-      // In draw function:
-      const ratImage = new Image();
-      ratImage.src = ratImagePath;
+  const ratImagePath = "mouse.png";
+  // In draw function:
+  const ratImage = new Image();
+  ratImage.src = ratImagePath;
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [snake] = useState([{ x: 10, y: 10 }]);
-  const { score, setScore } = useScore();
+  const [snake, setSnake] = useState([{ x: 10, y: 10 }]);
+  const {setScore } = useScore();
   const [direction, setDirection] = useState({ dx: 0, dy: 0 });
-  const gameLoopRef = useRef<number | null>(null);
 
   const newRat = (): Segment => {
     let rat: Segment;
@@ -54,22 +54,67 @@ const SnakeGameLogic: React.FC<SnakeGameLogicProps> = () => {
     setRat(newRat);
   };
 
+
+
+    // Update game logic
+  // using callback to avoid infinite loop
+  // and update the game state without causing re-render
+  // based on the old state 
+  const updateGame = useCallback(() => {
+    // moving the snake
+    setSnake((prevSnake) => {
+      const newSnake: Segment[] = [...prevSnake];
+      const newHead : Segment= {
+        x : newSnake[0].x + direction.dx,
+        y : newSnake[0].y + direction.dy
+      };
+          // Check if the snake eats the rat
+    if (newHead.x === rat.x && newHead.y === rat.y) {
+      newRandomRatPosition();
+      setScore(snake.length)
+    } else {
+      
+        newSnake.pop();
+      };
+    
+      return [newHead, ...newSnake];
+    })
+
+   
+
+  }, [direction, snake]);
+
+    // Game loop
+  // used to update the game state every 100ms
   useEffect(() => {
-    setScore(score + 1);
-    console.log("Score", score);
-  }, [direction]);
-  // Game constants
-  const GRID_SIZE = 20; // Grid size in pixels meaning the food
+    let lastUpdateTime = 0; // initialize the time stamp
+    let animationFrameId: number;
+
+    const gameLoop = (timestamp: number) => { // timestamp from the browser
+      if (!lastUpdateTime) lastUpdateTime = timestamp; // if it is 0 set it to the current timestamp to be accurate
+      const deltaTime = timestamp - lastUpdateTime; // calculate the time difference
+      if (deltaTime >= UPDATE_INTERVAL) {
+        updateGame();
+        lastUpdateTime = timestamp; //reset the lastUpdateTime 
+      }
+
+      animationFrameId = requestAnimationFrame(gameLoop); // call the game loop recursively on the next frame
+    };
+
+    animationFrameId = requestAnimationFrame(gameLoop); // start the game loop
+    return () => cancelAnimationFrame(animationFrameId); // stop the game loop when the component is unmounted
+  }, [updateGame]);
 
   // Initialize canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-    const draw = () => {
-      if (!ctx) return;
       // Clear canvas
+    const draw = () => {
+      
       canvas.style.width = "100%";
       canvas.style.height = "100%";
       const computedStyle = getComputedStyle(canvas);
@@ -99,7 +144,7 @@ const SnakeGameLogic: React.FC<SnakeGameLogicProps> = () => {
 
       // Draw rat
       ctx.fillStyle = "green";
-      if(ratImage.complete) {
+      if (ratImage.complete) {
         ctx.drawImage(
           ratImage,
           rat.x * GRID_SIZE,
@@ -110,42 +155,20 @@ const SnakeGameLogic: React.FC<SnakeGameLogicProps> = () => {
       } else {
         ctx.fillStyle = "green";
         ctx.fillRect(
-            rat.x * GRID_SIZE,
-            rat.y * GRID_SIZE,
-            GRID_SIZE - 2,
-            GRID_SIZE - 2,
-          );
+          rat.x * GRID_SIZE,
+          rat.y * GRID_SIZE,
+          GRID_SIZE - 2,
+          GRID_SIZE - 2,
+        );
       }
     };
 
     draw();
-    newRandomRatPosition();
-  }, [direction]);
+  }, [direction, snake, rat]);
 
-  const updateGame = useCallback(() => {
-    // on rat eat
 
-    // on collision with wall or self
-    // if(false) {
-    //     setGameOver();
-    // }
-    // on snake eat rat , new rat position
 
-    //newRandomRatPosition();
-    console.log("Update Game");
-  }, [direction]);
 
-  // Game loop
-  useEffect(() => {
-    console.log("Game Loop");
-    gameLoopRef.current = setInterval(updateGame, 100);
-
-    return () => {
-      if (gameLoopRef.current !== null) {
-        clearInterval(gameLoopRef.current);
-      }
-    };
-  }, [updateGame]);
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -172,7 +195,6 @@ const SnakeGameLogic: React.FC<SnakeGameLogicProps> = () => {
     return () => window.removeEventListener("keydown", handleKeyPress);
   }, [direction]);
 
-  useEffect(() => {}, [rat, direction]);
   return <canvas ref={canvasRef} />;
 };
 

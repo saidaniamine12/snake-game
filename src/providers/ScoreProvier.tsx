@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext } from "react";
+import { createContext, ReactNode, useContext, useState } from "react";
 
 // define the interface
 interface Score {
@@ -14,8 +14,9 @@ const ScoreContext = createContext<Score>({
 
 // create the provider
 const ScoreProvider = ({ children }: { children: ReactNode }) => {
+  const [score, setScore] = useState<number>(0);
   return (
-    <ScoreContext.Provider value={{ score: 0, setScore: () => {} }}>
+    <ScoreContext.Provider value={{ score, setScore }}>
       {children}
     </ScoreContext.Provider>
   );

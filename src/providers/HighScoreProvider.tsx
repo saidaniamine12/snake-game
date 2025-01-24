@@ -3,7 +3,6 @@ import { createContext } from "react";
 
 export interface GameData {
   highScore: number;
-  score: number;
 }
 
 // define high score context :defining yhe struture of the context

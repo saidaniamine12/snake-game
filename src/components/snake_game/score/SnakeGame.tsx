@@ -21,7 +21,6 @@ const SnakeGame = () => {
   useEffect(() => {
     const gameData: GameData = {
       highScore: highScore,
-      score: 0,
     };
     localStorage.setItem("gameData", JSON.stringify(gameData));
   }, [highScore, setHighScore]);
