@@ -1,40 +1,36 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useScore } from "../../../providers/ScoreProvier";
 import { useIsGamePaused } from "../../../providers/IsGamePausedProvider";
+import { useHighScore } from "../../../providers/HighScoreProvider";
+import { useIsGameOver } from "../../../providers/IsGameOver";
 
 interface Segment {
   x: number;
   y: number;
 }
-interface SnakeGameLogicProps {
-  // used to notify the parent and the logic will be handled in the parent
-  // better for separation of concerns and reusability, so the child does not need to care how the game over is handled
-  // ---->> flexibilty, encapsulation and separation of concerns
-  // and it uses callbacks so it might be more efficient if it was already memoized
-  // alternativee use setGameOver in the state and handle the game over in the logic Dispatch<SetStateAction<boolean>>
-  onGameOver: () => void;
-}
-
 // Game constants
 const GRID_SIZE = 20; // Grid size in pixels meaning the food width and length
-const UPDATE_INTERVAL = 100; // Update interval in milliseconds
+const UPDATE_INTERVAL = 120; // Update interval in milliseconds
 
-const SnakeGameLogic: React.FC<SnakeGameLogicProps> = ({ onGameOver }) => {
+const SnakeGameLogic = () => {
   const ratImagePath = "mouse.png";
   // In draw function:
   const ratImage = new Image();
   ratImage.src = ratImagePath;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [snake, setSnake] = useState([{ x: 10, y: 10 }]);
-  const { setScore } = useScore();
+  const { highScore, setHighScore } = useHighScore();
+  const { score, setScore } = useScore();
   // direction state vars to track the direction and prevent the 180 degree turn
   const [direction, setDirection] = useState({ dx: 0, dy: 0 });
   const currentDirection = useRef(direction);
   const queuedDirection = useRef(direction);
   // adding the pause fonctionality
-  const {isGamePaused, setIsGamePaused} = useIsGamePaused();
+  const { isGamePaused, setIsGamePaused } = useIsGamePaused();
   const isGamePausedRef = useRef(isGamePaused);
-  const accumulatedPauseTime = useRef(0);
+  // adding game over logic
+  const { isGameOver, setIsGameOver } = useIsGameOver();
+  const isGameOverRef = useRef(isGameOver);
 
   const newRat = (): Segment => {
     let rat: Segment;
@@ -78,21 +74,29 @@ const SnakeGameLogic: React.FC<SnakeGameLogicProps> = ({ onGameOver }) => {
   const updateGame = useCallback(() => {
     setDirection(queuedDirection.current);
     currentDirection.current = queuedDirection.current;
+
+    // Calculate new head position first
+    const newHead = {
+      x: snake[0].x + queuedDirection.current.dx,
+      y: snake[0].y + queuedDirection.current.dy,
+    };
+
+    // Check collisions before state update
+    const hasSelfCollision = snake.some(
+      (segment, index) =>
+        index !== 0 && segment.x === newHead.x && segment.y === newHead.y,
+    );
+    // const hasWallCollision =
+    //   newHead.x < 0 || newHead.x >= 20 ||
+    //   newHead.y < 0 || newHead.y >= 20;
+
+    if (hasSelfCollision) {
+      isGameOverRef.current = true;
+      setIsGameOver(true);
+      return; // Exit early if game over
+    }
     setSnake((prevSnake) => {
       const newSnake: Segment[] = [...prevSnake];
-      const newHead = {
-        x: prevSnake[0].x + currentDirection.current.dx,
-        y: prevSnake[0].y + currentDirection.current.dy,
-      };
-
-      // collision case
-      prevSnake.some((segment, index) => {
-        if (segment.x === newHead.x && segment.y === newHead.y && index != 0) {
-          console.log("Game Over");
-          // setGameOver(true);
-          // return prevSnake;
-        }
-      });
 
       // Check if the snake eats the rat
       if (newHead.x === rat.x && newHead.y === rat.y) {
@@ -112,17 +116,14 @@ const SnakeGameLogic: React.FC<SnakeGameLogicProps> = ({ onGameOver }) => {
     let animationFrameId: number;
 
     const gameLoop = (timestamp: number) => {
-
-      if (!isGamePausedRef.current) {
-      
-        if (!lastUpdateTime) lastUpdateTime = timestamp; 
+      if (!isGamePausedRef.current && !isGameOverRef.current) {
+        if (!lastUpdateTime) lastUpdateTime = timestamp;
         // Adjust time for pause duration
-        const adjustedTime = timestamp - accumulatedPauseTime.current;
-        const deltaTime = adjustedTime - lastUpdateTime;
+        const deltaTime = timestamp - lastUpdateTime;
 
         if (deltaTime >= UPDATE_INTERVAL) {
           updateGame();
-          lastUpdateTime = adjustedTime;
+          lastUpdateTime = timestamp;
         }
       }
 
@@ -193,28 +194,52 @@ const SnakeGameLogic: React.FC<SnakeGameLogicProps> = ({ onGameOver }) => {
     draw();
   }, [direction, snake]);
 
+  // game over handling
+  useEffect(() => {
+    // Reset game state when gameOver changes from true to false
+    if (isGameOver) {
+      if (score > highScore) {
+        setHighScore(score);
+      }
+    }
+    if (!isGameOver && score !== 0) {
+      // Reset snake position
+      setSnake([{ x: 10, y: 10 }]);
+      // Reset directions
+      setDirection({ dx: 0, dy: 0 });
+      currentDirection.current = { dx: 0, dy: 0 };
+      queuedDirection.current = { dx: 0, dy: 0 };
+      isGameOverRef.current = isGameOver;
+      //  Generate new rat position
+      setRat(newRat());
+      // Reset score
+      setScore(0);
+    }
+  }, [isGameOver]);
+
   // Input handling
   useEffect(() => {
-
     // space handling
     // arrow keys handling
     const handleKeyPress = (e: KeyboardEvent) => {
-      if(e.code === "Space") {
+      if (e.code === "Space") {
         if (!isGamePausedRef.current) {
           // set it to true
-            isGamePausedRef.current = true;
-            setIsGamePaused(true); 
+          isGamePausedRef.current = true;
+          setIsGamePaused(true);
         }
-      } 
-      if (isGamePausedRef.current ) {
-        if ( e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "ArrowUp" || e.key === "ArrowDown"){
+      }
+      if (isGamePausedRef.current) {
+        if (
+          e.key === "ArrowLeft" ||
+          e.key === "ArrowRight" ||
+          e.key === "ArrowUp" ||
+          e.key === "ArrowDown"
+        ) {
           isGamePausedRef.current = false;
-        setIsGamePaused(false);
-        
+          setIsGamePaused(false);
         }
-
-        
-      };
+      }
       const newDir = (() => {
         const { dx, dy } = currentDirection.current;
         switch (e.key) {
@@ -239,7 +264,7 @@ const SnakeGameLogic: React.FC<SnakeGameLogicProps> = ({ onGameOver }) => {
     window.addEventListener("keydown", handleKeyPress);
     return () => {
       window.removeEventListener("keydown", handleKeyPress);
-    }
+    };
   }, [direction]);
 
   return <canvas ref={canvasRef} />;

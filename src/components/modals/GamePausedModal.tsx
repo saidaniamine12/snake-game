@@ -1,8 +1,4 @@
-import {
-  Dialog,
-  DialogContent,
-  Slide,
-} from "@mui/material";
+import { Dialog, DialogContent, Slide } from "@mui/material";
 import { useIsGamePaused } from "../../providers/IsGamePausedProvider";
 import { TransitionProps } from "@mui/material/transitions";
 import React from "react";
@@ -18,17 +14,17 @@ const Transition = React.forwardRef(function Transition(
 });
 
 interface GamePausedProps {
-    gameOver: boolean;
-};
+  gameOver: boolean;
+}
 
-const GamePausedModal:React.FC<GamePausedProps> = ({gameOver}) => {
+const GamePausedModal: React.FC<GamePausedProps> = ({ gameOver }) => {
   const { isGamePaused } = useIsGamePaused();
   return (
     <Dialog
       open={isGamePaused && !gameOver}
       TransitionComponent={Transition}
       disableEscapeKeyDown
-      sx={{ textAlign: "center" , opacity: 0.5}}
+      sx={{ textAlign: "center", opacity: 0.5 }}
       PaperProps={{
         sx: {
           marginTop: "80vh",

@@ -6,6 +6,7 @@ import SnakeGame from "./components/snake_game/score/SnakeGame";
 import HighScoreProvider from "./providers/HighScoreProvider";
 import ScoreProvider from "./providers/ScoreProvier";
 import IsGamePausedProvider from "./providers/IsGamePausedProvider";
+import IsGameOverProvider from "./providers/IsGameOver";
 
 function App() {
   return (
@@ -40,14 +41,15 @@ function App() {
             />
             <Typography variant="h4">Snake Game</Typography>
           </Stack>
-          <HighScoreProvider>
-            <ScoreProvider>
-              <IsGamePausedProvider>
-                <SnakeGame />
-              </IsGamePausedProvider>
-              
-            </ScoreProvider>
-          </HighScoreProvider>
+          <IsGameOverProvider>
+            <HighScoreProvider>
+              <ScoreProvider>
+                <IsGamePausedProvider>
+                  <SnakeGame />
+                </IsGamePausedProvider>
+              </ScoreProvider>
+            </HighScoreProvider>
+          </IsGameOverProvider>
         </Stack>
       </Container>
     </>

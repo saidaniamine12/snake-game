@@ -31,7 +31,7 @@ const GameOverModal: React.FC<GameOverModalProps> = ({
   gameOver,
 }) => {
   const { score } = useScore();
-  const {isGamePaused} = useIsGamePaused();
+  const { isGamePaused } = useIsGamePaused();
 
   return (
     <Dialog
@@ -41,13 +41,14 @@ const GameOverModal: React.FC<GameOverModalProps> = ({
       sx={{ textAlign: "center" }}
       PaperProps={{
         sx: {
+          opacity: 0.5,
           minWidth: "400px", // Wider dialog
-          minHeight: "250px", // Taller dialog
+          minHeight: "20px", // Taller dialog
           padding: "24px", // More internal space
         },
       }}
     >
-      <DialogTitle>GAME OVER!</DialogTitle>
+      <DialogTitle sx={{ opacity: 1 }}>GAME OVER!</DialogTitle>
       <DialogContent>
         <p>Your Score: {score}</p>
       </DialogContent>
