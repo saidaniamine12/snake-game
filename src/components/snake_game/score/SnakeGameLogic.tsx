@@ -1,32 +1,65 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useScore } from "../../../providers/ScoreProvier";
 
+interface Segment {
+  x: number;
+  y: number;
+}
 interface SnakeGameLogicProps {
   setGameOver: () => void;
 }
 
+
 const SnakeGameLogic: React.FC<SnakeGameLogicProps> = () => {
+      // ensure that they do not overlap
+
+      const ratImagePath = "mouse.png";
+      // In draw function:
+      const ratImage = new Image();
+      ratImage.src = ratImagePath;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [snake] = useState([{ x: 10, y: 10 }]);
-  const [rat, setRat] = useState({ x: 10, y: 10 });
   const { score, setScore } = useScore();
   const [direction, setDirection] = useState({ dx: 0, dy: 0 });
   const gameLoopRef = useRef<number | null>(null);
 
+  const newRat = (): Segment => {
+    let rat: Segment;
+    do {
+      rat = {
+        x: Math.floor(Math.random() * 20),
+        y: Math.floor(Math.random() * 20),
+      };
+    } while (
+      snake.some((segment) => segment.x === rat.x && segment.y === rat.y)
+    );
+    return rat;
+  };
+  const newPosition = newRat();
+  const [rat, setRat] = useState<Segment>({
+    x: newPosition.x,
+    y: newPosition.y,
+  });
+
   const newRandomRatPosition = () => {
-    const newRat = {
-      x: Math.floor(Math.random() * 20),
-      y: Math.floor(Math.random() * 20),
-    };
+    let newRat: Segment;
+    do {
+      newRat = {
+        x: Math.floor(Math.random() * 20),
+        y: Math.floor(Math.random() * 20),
+      };
+    } while (
+      snake.some((segment) => segment.x === newRat.x && segment.y === newRat.y)
+    );
     setRat(newRat);
   };
 
   useEffect(() => {
     setScore(score + 1);
     console.log("Score", score);
-    }, [direction]);
+  }, [direction]);
   // Game constants
-  const GRID_SIZE = 20; // Grid size in pixels meaning the food 
+  const GRID_SIZE = 20; // Grid size in pixels meaning the food
 
   // Initialize canvas
   useEffect(() => {
@@ -37,7 +70,6 @@ const SnakeGameLogic: React.FC<SnakeGameLogicProps> = () => {
     const draw = () => {
       if (!ctx) return;
       // Clear canvas
-      newRandomRatPosition();
       canvas.style.width = "100%";
       canvas.style.height = "100%";
       const computedStyle = getComputedStyle(canvas);
@@ -67,16 +99,27 @@ const SnakeGameLogic: React.FC<SnakeGameLogicProps> = () => {
 
       // Draw rat
       ctx.fillStyle = "green";
-      ctx.fillRect(
-        rat.x * GRID_SIZE,
-        rat.y * GRID_SIZE,
-        GRID_SIZE - 2,
-        GRID_SIZE - 2,
-      );
+      if(ratImage.complete) {
+        ctx.drawImage(
+          ratImage,
+          rat.x * GRID_SIZE,
+          rat.y * GRID_SIZE,
+          GRID_SIZE,
+          GRID_SIZE,
+        );
+      } else {
+        ctx.fillStyle = "green";
+        ctx.fillRect(
+            rat.x * GRID_SIZE,
+            rat.y * GRID_SIZE,
+            GRID_SIZE - 2,
+            GRID_SIZE - 2,
+          );
+      }
     };
 
     draw();
-    console.log("direction", direction);
+    newRandomRatPosition();
   }, [direction]);
 
   const updateGame = useCallback(() => {
