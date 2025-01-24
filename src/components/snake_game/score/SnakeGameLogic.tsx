@@ -112,12 +112,18 @@ const SnakeGameLogic: React.FC<SnakeGameLogicProps> = ({ onGameOver }) => {
     let animationFrameId: number;
 
     const gameLoop = (timestamp: number) => {
-      // timestamp from the browser
-      if (!lastUpdateTime) lastUpdateTime = timestamp; // if it is 0 set it to the current timestamp to be accurate
-      const deltaTime = timestamp - lastUpdateTime; // calculate the time difference
-      if (deltaTime >= UPDATE_INTERVAL) {
-        updateGame();
-        lastUpdateTime = timestamp; //reset the lastUpdateTime
+
+      if (!isGamePausedRef.current) {
+      
+        if (!lastUpdateTime) lastUpdateTime = timestamp; 
+        // Adjust time for pause duration
+        const adjustedTime = timestamp - accumulatedPauseTime.current;
+        const deltaTime = adjustedTime - lastUpdateTime;
+
+        if (deltaTime >= UPDATE_INTERVAL) {
+          updateGame();
+          lastUpdateTime = adjustedTime;
+        }
       }
 
       animationFrameId = requestAnimationFrame(gameLoop); // call the game loop recursively on the next frame
@@ -204,6 +210,7 @@ const SnakeGameLogic: React.FC<SnakeGameLogicProps> = ({ onGameOver }) => {
         if ( e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "ArrowUp" || e.key === "ArrowDown"){
           isGamePausedRef.current = false;
         setIsGamePaused(false);
+        
         }
 
         
