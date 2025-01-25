@@ -1,7 +1,7 @@
 # 🐍 Snake Game
 
 A classic Snake game built with React  and TypeScript. Navigate the snake to eat food while avoiding walls and self-collisions!.
-- 🎲 try it: saidaniamine12.github.io/snake-game/
+- 🎲 try it: https://www.saidaniamine12.github.io/snake-game/
 
 ![Snake Game Screenshot](game-screenshots/snake-gameplay.png)
 
