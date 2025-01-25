@@ -49,8 +49,8 @@ const GameOverModal: React.FC<GameOverModalProps> = ({
       }}
     >
       <DialogTitle>GAME OVER!</DialogTitle>
-      <DialogContent >
-        <p style={{fontWeight: "bold"}}>Your Score: {score}</p>
+      <DialogContent>
+        <p style={{ fontWeight: "bold" }}>Your Score: {score}</p>
       </DialogContent>
       <DialogActions sx={{ justifyContent: "center" }}>
         <Button onClick={onRestart} variant="contained" color="primary">

@@ -10,14 +10,14 @@ import IsGameOverProvider from "./providers/IsGameOver";
 // App.tsx
 function App() {
   return (
-    <Container 
-      sx={{ 
+    <Container
+      sx={{
         width: "636px",
         height: "100vh",
         maxHeight: "100vh",
         padding: "10px 0",
         display: "flex",
-        flexDirection: "column"
+        flexDirection: "column",
       }}
     >
       <Stack
@@ -54,12 +54,14 @@ function App() {
         </Stack>
 
         {/* Game Section */}
-        <Stack sx={{ 
-          flexGrow: 1,
-          width: "100%",
-          padding: "0 20px",
-          overflow: "hidden"
-        }}>
+        <Stack
+          sx={{
+            flexGrow: 1,
+            width: "100%",
+            padding: "0 20px",
+            overflow: "hidden",
+          }}
+        >
           <IsGameOverProvider>
             <HighScoreProvider>
               <ScoreProvider>

@@ -31,15 +31,17 @@ const SnakeGameLogic = () => {
   // adding game over logic
   const { isGameOver, setIsGameOver } = useIsGameOver();
   const isGameOverRef = useRef(isGameOver);
-  const [updateInterval, setUpdateInterval] = useState(SNAKE_GAME_UPDATE_INTERVAL);
-  const lasGrid = useRef({x: 25, y: 25});
-  
+  const [updateInterval, setUpdateInterval] = useState(
+    SNAKE_GAME_UPDATE_INTERVAL,
+  );
+  const lasGrid = useRef({ x: 25, y: 25 });
+
   const newRat = (): Segment => {
     let rat: Segment;
     do {
       rat = {
-        x: Math.floor(Math.random() * lasGrid.current.x ),
-        y: Math.floor(Math.random() *  lasGrid.current.y ),
+        x: Math.floor(Math.random() * lasGrid.current.x),
+        y: Math.floor(Math.random() * lasGrid.current.y),
       };
     } while (
       snake.some((segment) => segment.x === rat.x && segment.y === rat.y)
@@ -55,7 +57,7 @@ const SnakeGameLogic = () => {
   useEffect(() => {
     setScore(snake.length - 1);
     // Increase speed when snake grows in length
-    setUpdateInterval(SNAKE_GAME_UPDATE_INTERVAL - (snake.length - 1) * 2); 
+    setUpdateInterval(SNAKE_GAME_UPDATE_INTERVAL - (snake.length - 1) * 2);
   }, [snake]);
 
   // Update game logic
@@ -72,9 +74,9 @@ const SnakeGameLogic = () => {
       y: snake[0].y + queuedDirection.current.dy,
     };
 
-    // the walls are not solid and even so I'm going to use the width and height 
+    // the walls are not solid and even so I'm going to use the width and height
     // of the canvas to wrap around the snake
-    // 
+    //
 
     if (newHead.x >= canvasRef.current!.width / GRID_SIZE) {
       newHead.x = 0;
@@ -89,8 +91,6 @@ const SnakeGameLogic = () => {
       newHead.y = lasGrid.current.y;
     }
     // Wrap around logic for walls
-    
-    
 
     // Check collisions before state update
     const hasSelfCollision = snake.some(
@@ -140,8 +140,6 @@ const SnakeGameLogic = () => {
     animationFrameId = requestAnimationFrame(gameLoop); // start the game loop
     return () => cancelAnimationFrame(animationFrameId); // stop the game loop when the component is unmounted
   }, [updateGame]);
-
-
 
   // game over handling
   useEffect(() => {
@@ -216,71 +214,113 @@ const SnakeGameLogic = () => {
     };
   }, [direction]);
 
-    // Initialize canvas
-    useEffect(() => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-      // if value is same do not update
-      if (lasGrid.current.x !== Math.floor( canvas.width / GRID_SIZE) || lasGrid.current.y !== Math.floor(canvas.height / GRID_SIZE)) {
-      lasGrid.current.x = (Math.floor( canvas.width / GRID_SIZE)) ;
-      lasGrid.current.y = (Math.floor(canvas.height / GRID_SIZE));
-      };
-      
+  // Initialize canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    // if value is same do not update
+    if (
+      lasGrid.current.x !== Math.floor(canvas.width / GRID_SIZE) ||
+      lasGrid.current.y !== Math.floor(canvas.height / GRID_SIZE)
+    ) {
+      lasGrid.current.x = Math.floor(canvas.width / GRID_SIZE);
+      lasGrid.current.y = Math.floor(canvas.height / GRID_SIZE);
+    }
 
-      // Clear canvas
-      const draw = () => {
-        canvas.style.width = "100%";
-        canvas.style.height = "100%";
-        const computedStyle = getComputedStyle(canvas);
-        const width = parseFloat(computedStyle.width);
-        const height = parseFloat(computedStyle.height);
-        // Set internal pixel grid
-        canvas.width = width * devicePixelRatio;
-        canvas.height = height * devicePixelRatio;
+    // Clear canvas
+    const draw = () => {
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
+      const computedStyle = getComputedStyle(canvas);
+      const width = parseFloat(computedStyle.width);
+      const height = parseFloat(computedStyle.height);
+      // Set internal pixel grid
+      canvas.width = width * devicePixelRatio;
+      canvas.height = height * devicePixelRatio;
 
-        // Set CSS display size
-        canvas.style.width = `${width}px`;
-        canvas.style.height = `${height}px`;
-        // Scale context for sharp rendering
-        ctx.fillStyle = "#EDDB78";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
+      // Set CSS display size
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      // Scale context for sharp rendering
+      ctx.fillStyle = "#EDDB78";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Draw snake
-        ctx.fillStyle = "red";
-        snake.forEach((segment) => {
-          ctx.fillRect(
+      const drawSnake = () => {
+        snake.forEach((segment, index) => {
+          // Create gradient for snake segments for each segment
+          const gradient = ctx.createLinearGradient(
             segment.x * GRID_SIZE,
             segment.y * GRID_SIZE,
-            GRID_SIZE -2,
-            GRID_SIZE -2,
+            (segment.x + 1) * GRID_SIZE,
+            (segment.y + 1) * GRID_SIZE,
           );
+
+          // Color gradient from head (bluer) to tail (greener)
+          // using hsl because we are changing the color from head to tale based on index
+          gradient.addColorStop(0, `hsl(${200 - index * 2}, 70%, 50%)`);
+          // changing the vividness of the color and the lightness of each segment
+          gradient.addColorStop(1, `hsl(${200 - index * 2}, 90%, 30%)`);
+
+          // Rounded snake segments
+          ctx.beginPath();
+          ctx.roundRect(
+            segment.x * GRID_SIZE + 1,
+            segment.y * GRID_SIZE + 1,
+            GRID_SIZE - 1,
+            GRID_SIZE - 1,
+            5, // Rounded corners radius
+          );
+          ctx.fillStyle = gradient;
+          ctx.fill();
+
         });
-  
-        // Draw rat
-        if (ratImage.complete) {
-          ctx.drawImage(
-            ratImage,
-            rat.x * GRID_SIZE,
-            rat.y * GRID_SIZE,
-            GRID_SIZE ,
-            GRID_SIZE ,
-          );
-        } else {
-          ctx.fillStyle = "green";
-          ctx.fillRect(
-            rat.x * GRID_SIZE,
-            rat.y * GRID_SIZE,
-            GRID_SIZE - 2,
-            GRID_SIZE - 2,
-          );
-        }
+
+        ctx.save();
       };
-  
-      draw();
-    }, [direction, snake]);
+      drawSnake();
+
+      // Draw rat
+      if (ratImage.complete) {
+        ctx.drawImage(
+          ratImage,
+          rat.x * GRID_SIZE,
+          rat.y * GRID_SIZE,
+          GRID_SIZE,
+          GRID_SIZE,
+        );
+      } else {
+        // Create gradient for snake segments for each segment
+        const gradient = ctx.createLinearGradient(
+          rat.x * GRID_SIZE,
+          rat.y * GRID_SIZE,
+          (rat.x + 1) * GRID_SIZE,
+          (rat.y + 1) * GRID_SIZE,
+        );
+
+        // Color gradient from head (bluer) to tail (greener)
+        // using hsl because we are changing the color from head to tale based on index
+        gradient.addColorStop(0, `hsl(106, 88%, 48%)`);
+        // changing the vividness of the color and the lightness of each segment
+        gradient.addColorStop(1, `hsl(106, 88%, 36%)`);
+
+        // Rounded snake segments
+        ctx.beginPath();
+        ctx.roundRect(
+          rat.x * GRID_SIZE + 1,
+          rat.y * GRID_SIZE + 1,
+          GRID_SIZE - 1,
+          GRID_SIZE - 1,
+          5, // Rounded corners radius
+        );
+        ctx.fillStyle = gradient;
+        ctx.fill();
+      }
+    };
+
+    draw();
+  }, [direction, snake]);
 
   return <canvas ref={canvasRef} />;
 };
