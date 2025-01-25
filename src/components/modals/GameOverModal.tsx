@@ -41,16 +41,16 @@ const GameOverModal: React.FC<GameOverModalProps> = ({
       sx={{ textAlign: "center" }}
       PaperProps={{
         sx: {
-          opacity: 0.5,
+          backgroundColor: "rgba(255, 255, 255, 0.5)",
           minWidth: "400px", // Wider dialog
           minHeight: "20px", // Taller dialog
           padding: "24px", // More internal space
         },
       }}
     >
-      <DialogTitle sx={{ opacity: 1 }}>GAME OVER!</DialogTitle>
-      <DialogContent>
-        <p>Your Score: {score}</p>
+      <DialogTitle>GAME OVER!</DialogTitle>
+      <DialogContent >
+        <p style={{fontWeight: "bold"}}>Your Score: {score}</p>
       </DialogContent>
       <DialogActions sx={{ justifyContent: "center" }}>
         <Button onClick={onRestart} variant="contained" color="primary">

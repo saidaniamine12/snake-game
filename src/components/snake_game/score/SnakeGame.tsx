@@ -57,9 +57,9 @@ const SnakeGame = () => {
       >
         <Box
           sx={{
-            width: "90%",
+            width: "90.5%",
             maxWidth: "100%",
-            height: "90%",
+            height: "87%",
             maxHeight: "100%",
             aspectRatio: "1",
             border: "3px solid #8F5E0F",

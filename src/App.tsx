@@ -7,40 +7,59 @@ import HighScoreProvider from "./providers/HighScoreProvider";
 import ScoreProvider from "./providers/ScoreProvier";
 import IsGamePausedProvider from "./providers/IsGamePausedProvider";
 import IsGameOverProvider from "./providers/IsGameOver";
-
+// App.tsx
 function App() {
   return (
-    <>
-      <Container sx={{ width: "636px", height: "710px" }}>
+    <Container 
+      sx={{ 
+        width: "636px",
+        height: "100vh",
+        maxHeight: "100vh",
+        padding: "10px 0",
+        display: "flex",
+        flexDirection: "column"
+      }}
+    >
+      <Stack
+        direction="column"
+        alignItems="center"
+        sx={{
+          border: "3px solid #f8a24d",
+          borderRadius: "1%",
+          flexGrow: 1,
+          minHeight: "565px",
+          width: "100%",
+          backgroundColor: "#f8a24d",
+          overflow: "hidden",
+        }}
+      >
+        {/* Header Section */}
         <Stack
-          direction="column"
+          direction="row"
           alignItems="center"
+          spacing={1}
           sx={{
-            border: "3px solid #f8a24d",
-            borderRadius: "1%",
-            height: "90%",
-            minHeight: "565px",
-            width: "100%",
-            backgroundColor: "#f8a24d",
+            marginBottom: "8px",
+            padding: "0 20px",
+            minHeight: "80px",
           }}
         >
-          <Stack
-            direction="row"
-            alignItems="center"
-            spacing={1}
-            sx={{
-              marginBottom: "8px",
-              textAlign: "center",
-            }}
-          >
-            <img
-              src={snakeLogo}
-              className="logo"
-              alt="Snake Game Logo"
-              style={{ height: "60px" }}
-            />
-            <Typography variant="h4">Snake Game</Typography>
-          </Stack>
+          <img
+            src={snakeLogo}
+            className="logo"
+            alt="Snake Game Logo"
+            style={{ height: "60px" }}
+          />
+          <Typography variant="h4">Snake Game</Typography>
+        </Stack>
+
+        {/* Game Section */}
+        <Stack sx={{ 
+          flexGrow: 1,
+          width: "100%",
+          padding: "0 20px",
+          overflow: "hidden"
+        }}>
           <IsGameOverProvider>
             <HighScoreProvider>
               <ScoreProvider>
@@ -51,8 +70,8 @@ function App() {
             </HighScoreProvider>
           </IsGameOverProvider>
         </Stack>
-      </Container>
-    </>
+      </Stack>
+    </Container>
   );
 }
 

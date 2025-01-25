@@ -24,9 +24,10 @@ const GamePausedModal: React.FC<GamePausedProps> = ({ gameOver }) => {
       open={isGamePaused && !gameOver}
       TransitionComponent={Transition}
       disableEscapeKeyDown
-      sx={{ textAlign: "center", opacity: 0.5 }}
+      sx={{ textAlign: "center" }}
       PaperProps={{
-        sx: {
+        sx: { 
+          backgroundColor: "rgba(255, 255, 255, 0.5)",
           marginTop: "80vh",
           minWidth: "400px", // Wider dialog
           minHeight: "100", // Taller dialog

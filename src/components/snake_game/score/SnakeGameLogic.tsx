@@ -10,7 +10,7 @@ interface Segment {
 }
 // Game constants
 const GRID_SIZE = 20; // Grid size in pixels meaning the food width and length
-const UPDATE_INTERVAL = 120; // Update interval in milliseconds
+const SNAKE_GAME_UPDATE_INTERVAL = 100; // Update interval in milliseconds
 
 const SnakeGameLogic = () => {
   const ratImagePath = "mouse.png";
@@ -31,40 +31,31 @@ const SnakeGameLogic = () => {
   // adding game over logic
   const { isGameOver, setIsGameOver } = useIsGameOver();
   const isGameOverRef = useRef(isGameOver);
-
+  const [updateInterval, setUpdateInterval] = useState(SNAKE_GAME_UPDATE_INTERVAL);
+  const lasGrid = useRef({x: 25, y: 25});
+  
   const newRat = (): Segment => {
     let rat: Segment;
     do {
       rat = {
-        x: Math.floor(Math.random() * 20),
-        y: Math.floor(Math.random() * 20),
+        x: Math.floor(Math.random() * lasGrid.current.x ),
+        y: Math.floor(Math.random() *  lasGrid.current.y ),
       };
     } while (
       snake.some((segment) => segment.x === rat.x && segment.y === rat.y)
     );
     return rat;
   };
-  const newPosition = newRat();
-  const [rat, setRat] = useState<Segment>({
-    x: newPosition.x,
-    y: newPosition.y,
-  });
+  const [rat, setRat] = useState<Segment>(() => newRat());
 
   const newRandomRatPosition = () => {
-    let newRat: Segment;
-    do {
-      newRat = {
-        x: Math.floor(Math.random() * 20),
-        y: Math.floor(Math.random() * 20),
-      };
-    } while (
-      snake.some((segment) => segment.x === newRat.x && segment.y === newRat.y)
-    );
-    setRat(newRat);
+    setRat(newRat());
   };
 
   useEffect(() => {
     setScore(snake.length - 1);
+    // Increase speed when snake grows in length
+    setUpdateInterval(SNAKE_GAME_UPDATE_INTERVAL - (snake.length - 1) * 2); 
   }, [snake]);
 
   // Update game logic
@@ -81,15 +72,31 @@ const SnakeGameLogic = () => {
       y: snake[0].y + queuedDirection.current.dy,
     };
 
+    // the walls are not solid and even so I'm going to use the width and height 
+    // of the canvas to wrap around the snake
+    // 
+
+    if (newHead.x >= canvasRef.current!.width / GRID_SIZE) {
+      newHead.x = 0;
+    }
+    if (newHead.x < 0) {
+      newHead.x = lasGrid.current.x;
+    }
+    if (newHead.y >= canvasRef.current!.height / GRID_SIZE) {
+      newHead.y = 0;
+    }
+    if (newHead.y < 0) {
+      newHead.y = lasGrid.current.y;
+    }
+    // Wrap around logic for walls
+    
+    
+
     // Check collisions before state update
     const hasSelfCollision = snake.some(
       (segment, index) =>
         index !== 0 && segment.x === newHead.x && segment.y === newHead.y,
     );
-    // const hasWallCollision =
-    //   newHead.x < 0 || newHead.x >= 20 ||
-    //   newHead.y < 0 || newHead.y >= 20;
-
     if (hasSelfCollision) {
       isGameOverRef.current = true;
       setIsGameOver(true);
@@ -121,7 +128,7 @@ const SnakeGameLogic = () => {
         // Adjust time for pause duration
         const deltaTime = timestamp - lastUpdateTime;
 
-        if (deltaTime >= UPDATE_INTERVAL) {
+        if (deltaTime >= updateInterval) {
           updateGame();
           lastUpdateTime = timestamp;
         }
@@ -134,65 +141,7 @@ const SnakeGameLogic = () => {
     return () => cancelAnimationFrame(animationFrameId); // stop the game loop when the component is unmounted
   }, [updateGame]);
 
-  // Initialize canvas
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
 
-    // Clear canvas
-    const draw = () => {
-      canvas.style.width = "100%";
-      canvas.style.height = "100%";
-      const computedStyle = getComputedStyle(canvas);
-      const width = parseFloat(computedStyle.width);
-      const height = parseFloat(computedStyle.height);
-      // Set internal pixel grid
-      canvas.width = width * devicePixelRatio;
-      canvas.height = height * devicePixelRatio;
-      // Set CSS display size
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
-      // Scale context for sharp rendering
-      ctx.scale(devicePixelRatio, devicePixelRatio);
-      ctx.fillStyle = "#EDDB78";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Draw snake
-      ctx.fillStyle = "red";
-      snake.forEach((segment) => {
-        ctx.fillRect(
-          segment.x * GRID_SIZE,
-          segment.y * GRID_SIZE,
-          GRID_SIZE - 2,
-          GRID_SIZE - 2,
-        );
-      });
-
-      // Draw rat
-      ctx.fillStyle = "green";
-      if (ratImage.complete) {
-        ctx.drawImage(
-          ratImage,
-          rat.x * GRID_SIZE,
-          rat.y * GRID_SIZE,
-          GRID_SIZE,
-          GRID_SIZE,
-        );
-      } else {
-        ctx.fillStyle = "green";
-        ctx.fillRect(
-          rat.x * GRID_SIZE,
-          rat.y * GRID_SIZE,
-          GRID_SIZE - 2,
-          GRID_SIZE - 2,
-        );
-      }
-    };
-
-    draw();
-  }, [direction, snake]);
 
   // game over handling
   useEffect(() => {
@@ -266,6 +215,72 @@ const SnakeGameLogic = () => {
       window.removeEventListener("keydown", handleKeyPress);
     };
   }, [direction]);
+
+    // Initialize canvas
+    useEffect(() => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      // if value is same do not update
+      if (lasGrid.current.x !== Math.floor( canvas.width / GRID_SIZE) || lasGrid.current.y !== Math.floor(canvas.height / GRID_SIZE)) {
+      lasGrid.current.x = (Math.floor( canvas.width / GRID_SIZE)) ;
+      lasGrid.current.y = (Math.floor(canvas.height / GRID_SIZE));
+      };
+      
+
+      // Clear canvas
+      const draw = () => {
+        canvas.style.width = "100%";
+        canvas.style.height = "100%";
+        const computedStyle = getComputedStyle(canvas);
+        const width = parseFloat(computedStyle.width);
+        const height = parseFloat(computedStyle.height);
+        // Set internal pixel grid
+        canvas.width = width * devicePixelRatio;
+        canvas.height = height * devicePixelRatio;
+
+        // Set CSS display size
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+        // Scale context for sharp rendering
+        ctx.fillStyle = "#EDDB78";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+
+        // Draw snake
+        ctx.fillStyle = "red";
+        snake.forEach((segment) => {
+          ctx.fillRect(
+            segment.x * GRID_SIZE,
+            segment.y * GRID_SIZE,
+            GRID_SIZE -2,
+            GRID_SIZE -2,
+          );
+        });
+  
+        // Draw rat
+        if (ratImage.complete) {
+          ctx.drawImage(
+            ratImage,
+            rat.x * GRID_SIZE,
+            rat.y * GRID_SIZE,
+            GRID_SIZE ,
+            GRID_SIZE ,
+          );
+        } else {
+          ctx.fillStyle = "green";
+          ctx.fillRect(
+            rat.x * GRID_SIZE,
+            rat.y * GRID_SIZE,
+            GRID_SIZE - 2,
+            GRID_SIZE - 2,
+          );
+        }
+      };
+  
+      draw();
+    }, [direction, snake]);
 
   return <canvas ref={canvasRef} />;
 };
