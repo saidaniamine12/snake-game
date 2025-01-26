@@ -10,7 +10,7 @@ interface Segment {
 }
 // Game constants
 const GRID_SIZE = 20; // Grid size in pixels meaning the food width and length
-const SNAKE_GAME_UPDATE_INTERVAL = 100; // Update interval in milliseconds
+const SNAKE_GAME_UPDATE_INTERVAL = 120; // Update interval in milliseconds
 
 const SnakeGameLogic = () => {
   const ratImagePath = "mouse.png";
@@ -57,7 +57,10 @@ const SnakeGameLogic = () => {
   useEffect(() => {
     setScore(snake.length - 1);
     // Increase speed when snake grows in length
-    setUpdateInterval(SNAKE_GAME_UPDATE_INTERVAL - (snake.length - 1) * 2);
+    if ((snake.length < 50)) {
+      setUpdateInterval(SNAKE_GAME_UPDATE_INTERVAL - (snake.length - 1));
+    }
+    
   }, [snake]);
 
   // Update game logic
