@@ -10,7 +10,7 @@ interface Segment {
 }
 // Game constants
 const GRID_SIZE = 20; // Grid size in pixels meaning the food width and length
-const SNAKE_GAME_UPDATE_INTERVAL = 120; // Update interval in milliseconds
+const SNAKE_GAME_UPDATE_INTERVAL = 110; // Update interval in milliseconds
 
 const SnakeGameLogic = () => {
   const ratImagePath = "mouse.png";
